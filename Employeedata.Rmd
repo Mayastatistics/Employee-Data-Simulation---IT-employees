@@ -10,7 +10,7 @@ knitr::opts_chunk$set(echo = TRUE)
 ```
 
 ```{r}
-data=read.csv('employee_data.csv') #code to read/obtain the data in the project
+data=read.csv('employee_data.csv') # code to read/obtain the data in the project
 attach(data) #code so we don't have to write the dataset name all over again in the analysis
 ```
 
@@ -22,14 +22,14 @@ According to the original poster of the dataset, the dataset was generated using
 # Explanations of the variables and plan for analysis
 
 This dataset consists of 5 different variables:
-1) ID - an unique identifier for each employee
+1) ID - an unique identifier for each employee (we can ignore it here)
 2) gender - either M for Male or F for female
 3) experience in years
 4) position
 5) salary - in USD
 
 Plan for analysis consists of the following steps:
-a. create nummerical summaries for each variables
+a. create numerical summaries for each variables
 b. check distribution of each variable by graphically showing it with boxplot and histogram/barplot
 c. if there will be outliers, make a decision what are we going to do with them?
 d. proceed with outlier cleansing
@@ -42,6 +42,7 @@ e. try to find relationships between the variables (we can do hypothesis testing
 which(is.na(data))
 sum(is.na(data))
 ```
+We don't have any missing values.
 
 ```{r}
 #summaries of variables + checking IQR + checking what are the Q1/Q3 +/- 1,5*IQR borders, as I assume already that salaries will be a variable with outliers.
@@ -122,10 +123,47 @@ The first four questions are just based on/in this sample, while 5th question is
 
 ```{r}
 basic = ggplot(data,aes(x=Gender,y=Experience..Years.))
-basic + geom_violin(trim=FALSE,adjust=0.5)
+basic + geom_violin(trim=FALSE,adjust=0.5,fill="#088395")
+```
+
+```{r}
+library(ggplot2)
+main = ggplot(data,aes(x=Experience..Years.,fill=Gender))
+main + geom_histogram(binwidth=1) + ggtitle("Relationship between gender and years of experience") + xlab("Years of experience") + ylab("Count of IT employees") + scale_fill_manual(values=c("M"="#088395","F" = "#FFB4C2"))
 ```
 
 
+
+## 2. How does the distribution of salary in USD look like between genders?
+
+
+```{r}
+basic = ggplot(data,aes(x=Gender,y=Salary))
+basic + geom_violin(trim=FALSE,adjust=0.5,fill="#088395")
+```
+
+
+```{r}
+main = ggplot(data,aes(x=Salary,fill=Gender))
+main + geom_histogram(binwidth=10000) + ggtitle("Relationship between gender and salary in USD") + xlab("Salary in USD") + ylab("Count of IT employees") + scale_fill_manual(values=c("M"="#088395","F" = "#FFB4C2"))
+```
+
+
+```{r}
+basic = ggplot(data,aes(x=Salary,y=Experience..Years.))
+basic + geom_violin(trim=FALSE,adjust=1,fill="#088395")
+```
+
+```{r}
+ggplot(data,aes(x=Salary,y=Experience..Years.)) + geom_point(color="#088395")
+```
+
+
+
+```{r}
+main = ggplot(data,aes(x=Salary)) #histogram for salaries
+main + geom_histogram(fill="#088395",colour="#071952",binwidth=20000) + ggtitle("Distribution of salaries") + xlab("Salary in USD") + ylab("Count of IT employees")
+```
 
 
 
