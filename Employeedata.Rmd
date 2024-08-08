@@ -15,6 +15,7 @@ attach(data) #code so we don't have to write the dataset name all over again in 
 ```
 
 # Origin of the dataset
+
 The dataset has been found and downloaded on Kaggle - https://www.kaggle.com/datasets/abhayayare/employee-data-simulation-it-industry.
 This raw data contains simulated data of 400 employees which ware working on various IT positions.
 According to the original poster of the dataset, the dataset was generated using Faker library in Python.
@@ -67,6 +68,7 @@ library(ggplot2)
 main = ggplot(data,aes(x=Experience..Years.)) #histogram for years of experience
 main + geom_histogram(fill="#088395",colour="#071952",binwidth=1) + ggtitle("Distribution of years of experience") + xlab("Experience in years") + ylab("Count of IT employees")
 ```
+
 Experience in years among IT employees is scattered from 0 to 20 years, with median and mean values being quite close together (around 10 years of experience).
 
 ```{r}
@@ -81,11 +83,13 @@ Let's check boxplots to see if we can hunt down some outliers for these variable
 ```{r}
 ggplot(data,aes(x=Experience..Years.)) + geom_boxplot(fill="#088395",colour="#071952") + ggtitle("Boxplot of experience in years") + xlab("Experience in years")
 ```
+
 Boxplot for experience in years doesn't show any outliers, we will proceed with this variable as it is.
 
 ```{r}
 ggplot(data,aes(x=Salary)) + geom_boxplot(fill="#088395",colour="#071952") + ggtitle("Boxplot of salaries") + xlab("Salary in USD")
 ```
+
 As predicted, and seen on histogram, variable salary in USD has some outliers on the higher side. Let's code more to see how many of them do we have and if it is possible to delete them, if they don't make a big portion of the dataset.
 
 ```{r}
@@ -94,14 +98,16 @@ out=boxplot.stats(data$Salary)$out
 out_ind=which(data$Salary %in% c(out)) #code to see in which rows are those outliers in the dataset
 out_ind
 ```
-You can see that we have 5 outliers, which is only 1,25% of the whole dataset. I will go further with deleting these outliers, so we can draw out some relationships between the categorical and numerical values, and so it doesn't hinder our hypothesis testing and predictive analysis processes later on.
+You can see that we have 5 outliers, which only makes 1,25% of the whole dataset. I will go further with deleting these outliers, so we can draw out some relationships between the categorical and numerical values, and so it doesn't hinder our hypothesis testing and predictive analysis processes later on.
 
 ```{r}
 # Remove rows where Salary is higher than the upper_border which we have calculated in the beginning
 data <- data[data$Salary <= 243610.4, ]
-# Print the modified data frame
+# Print and attach the modified data frame
 print(data)
 ```
+
+
 ```{r}
 ggplot(data,aes(x=Salary)) + geom_boxplot(fill="#088395",colour="#071952") + ggtitle("Boxplot of salaries") + xlab("Salary in USD")
 ```
@@ -111,27 +117,30 @@ Now, after deleting those 5 values, we still have one outlier, but that only the
 # Relationships between categorical and numerical values
 
 In order to discover relationships between these variables in the dataset, we have to ask ourselves some questions:
+
 1. How does the distribution of experience in years look like between genders?
 2. How does the distribution of salary in USD look like between genders?
 3. Do employees with more experience earn more money?
 4. What is the difference between salaries between positions?
 5. If I have 5 years of experience, what will my salary be?
 
-The first four questions are just based on/in this sample, while 5th question is going to be checked via linear regression analysis, if all prerequisites for it are checked and correct.
+The first four questions are just based on/in this sample, while the 5th question is going to be checked via linear regression analysis, if all prerequisites for it are checked and correct.
 
 ## 1. How does the distribution of experience in years look like between genders?
 
 ```{r}
 basic = ggplot(data,aes(x=Gender,y=Experience..Years.))
-basic + geom_violin(trim=FALSE,adjust=0.5,fill="#088395")
+basic + geom_violin(trim=FALSE,adjust=0.5,fill="#088395") #trim is false so we don't get flat top and bottom
 ```
+
+This violin is another way how to present a boxplot. I thought this was a much nicer way to show how the years of experience go in between genders (think of the age pyramid). On this boxplot, we can see that more male IT employees have between 0-5 years of experience, while more female IT employees have between 8 and 15 years of experience. 
 
 ```{r}
 library(ggplot2)
 main = ggplot(data,aes(x=Experience..Years.,fill=Gender))
 main + geom_histogram(binwidth=1) + ggtitle("Relationship between gender and years of experience") + xlab("Years of experience") + ylab("Count of IT employees") + scale_fill_manual(values=c("M"="#088395","F" = "#FFB4C2"))
 ```
-
+This histogram also shows that in a more visible manner.
 
 
 ## 2. How does the distribution of salary in USD look like between genders?
@@ -141,30 +150,94 @@ main + geom_histogram(binwidth=1) + ggtitle("Relationship between gender and yea
 basic = ggplot(data,aes(x=Gender,y=Salary))
 basic + geom_violin(trim=FALSE,adjust=0.5,fill="#088395")
 ```
-
+When it comes to salary, more male IT employees  have higher salary (between 150-200k USD), and on the female side it is visible that there are some gaps in the middle, but in some paygrades it is visible that females are more paid than males. When it comes to the very peak of salaries, there are more females with that peak of salary than males.
 
 ```{r}
 main = ggplot(data,aes(x=Salary,fill=Gender))
 main + geom_histogram(binwidth=10000) + ggtitle("Relationship between gender and salary in USD") + xlab("Salary in USD") + ylab("Count of IT employees") + scale_fill_manual(values=c("M"="#088395","F" = "#FFB4C2"))
 ```
+On this histogram you can see that in most of the classes, females have a bigger number of members, especially in the middle.
 
+## 3. Do employees with more experience earn more money?
 
 ```{r}
 basic = ggplot(data,aes(x=Salary,y=Experience..Years.))
 basic + geom_violin(trim=FALSE,adjust=1,fill="#088395")
 ```
 
+When it comes to a relationship between money and years of experience, it is visible that there is a very big span between it. Someone who just starts with their career might have between approximately 140-145k USD, but then later the range of salaries just gets bigger, and being between 50k and 250k USD. Just looking at this boxplot, it is quite visible that we can't hope for some strong correlation or relationship between these two numerical variables.
+
+Let's see what scatter plot shows.
+
 ```{r}
 ggplot(data,aes(x=Salary,y=Experience..Years.)) + geom_point(color="#088395")
 ```
 
+As we said earlier, scatter plot doesn't show any linearity between the two numerical variables.
 
+## 4. What is the difference between salaries between positions?
 
 ```{r}
-main = ggplot(data,aes(x=Salary)) #histogram for salaries
-main + geom_histogram(fill="#088395",colour="#071952",binwidth=20000) + ggtitle("Distribution of salaries") + xlab("Salary in USD") + ylab("Count of IT employees")
+basic = ggplot(data,aes(x=Position,y=Salary))
+basic + geom_boxplot(trim=FALSE,adjust=0.5,fill="#088395") + theme(axis.text.x=element_text(angle=45,hjust=1, size=10)) + labs(x="Position",y="Salary") + stat_summary(fun = median, geom = "text", aes(label = round(..y.., 1)), vjust = -0.5, color = "red", size = 3)
 ```
 
+On this boxplot, you can see the relationship between each position and their salary. The IT Support specialists have the lowest salary, between 75k and 100k USD. Others are in between 100-150k USD, with very different median value in between them as well. The median values are red on the boxplot.
 
 
+## 5. If I have 5 years of experience, what will my salary be?
 
+Let's try to create a simple linear regression model, and see how much my salary would be if I have 5 years of experience, no matter my position.
+
+There are couple of assumptions that we need to check before we do linear regression:
+
+a. Linearity: The relationship between the dependent and independent variables should be linear.
+b. Independence: Observations should be independent of each other.
+c. Homoscedasticity: The residuals (errors) should have constant variance at every level of the independent variables.
+d. Normality: The residuals should be approximately normally distributed.
+e. No Multicollinearity (for multiple linear regression): The independent variables should not be too highly correlated with each other.
+
+Let's check LINEARITY:
+
+```{r}
+model <- lm(Salary ~ Experience..Years., data = data)
+ggplot(data, aes(x = Experience..Years., y = Salary)) + geom_point() +  geom_smooth(method = "lm", col = "#088395") + labs(title = "Scatter Plot of Salary vs Experience in years", x = "Experience..Years.", y = "Salary")
+plot(model$fitted.values, model$residuals)
+abline(h = 0, col = "red")
+title("Residuals vs Fitted Values")
+
+```
+Assumption failed - there is no linearity.
+
+Checking HOMOSCEDASTICITY
+
+```{r}
+plot(model$fitted.values, model$residuals)
+abline(h = 0, col = "red")
+title("Residuals vs Fitted Values")
+bptest(model)
+
+```
+The p-value of Breusch-Pagan test should be higher than 0.05 to show homoscedasticity. Assumption failed.
+
+Checking NORMALITY OF RESIDUALS
+
+```{r}
+qqnorm(model$residuals)
+qqline(model$residuals, col = "red")
+shapiro.test(model$residuals)
+
+```
+Values should go along the Q-Q plot, here they majorly are, but not on the tails. P-value should be higher than 0.05. Assumption failed.
+
+```{r}
+summary(model)
+```
+
+The p-values are good, lower than 0.05, but the issue is that the R-squared is quite small, only 37,63% of the variation is explained with this model in this dataset. 
+
+If my experience would be 0, I would get salary around 90.264 USD, and if I would have 5 years of experience, I would get 90,264 + 4,157 * 5 = 111.049 USD.
+
+According to this model, with each year of experience, I would get a raise of 4.157 USD.
+
+This whole dataset is a simulation, so it is expected that there is no linearity, or possibility to make a regression model based on this data. Data would have to be standardized or log to proceed further.
