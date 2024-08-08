@@ -1,0 +1,132 @@
+---
+title: "Employee data simulation - IT"
+author: "Maja B"
+date: "2024-08-08"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r}
+data=read.csv('employee_data.csv') #code to read/obtain the data in the project
+attach(data) #code so we don't have to write the dataset name all over again in the analysis
+```
+
+# Origin of the dataset
+The dataset has been found and downloaded on Kaggle - https://www.kaggle.com/datasets/abhayayare/employee-data-simulation-it-industry.
+This raw data contains simulated data of 400 employees which ware working on various IT positions.
+According to the original poster of the dataset, the dataset was generated using Faker library in Python.
+
+# Explanations of the variables and plan for analysis
+
+This dataset consists of 5 different variables:
+1) ID - an unique identifier for each employee
+2) gender - either M for Male or F for female
+3) experience in years
+4) position
+5) salary - in USD
+
+Plan for analysis consists of the following steps:
+a. create nummerical summaries for each variables
+b. check distribution of each variable by graphically showing it with boxplot and histogram/barplot
+c. if there will be outliers, make a decision what are we going to do with them?
+d. proceed with outlier cleansing
+e. try to find relationships between the variables (we can do hypothesis testing, regression analysis, trending...)
+
+# Summaries and graphical notations of the variables
+
+```{r}
+#checking for missing values, there are none.
+which(is.na(data))
+sum(is.na(data))
+```
+
+```{r}
+#summaries of variables + checking IQR + checking what are the Q1/Q3 +/- 1,5*IQR borders, as I assume already that salaries will be a variable with outliers.
+summary(data)
+IQR_Exp=IQR(Experience..Years.)
+IQR_Sal=IQR(Salary)
+#lower_border= Q1 - 1,5 * IQR_Sal (for salaries)
+lower_border= 100485 - 1.5 * IQR_Sal
+#upper_border= Q3 + 1,5 * IQR_Sal (for salaries)
+upper_border = 157735 + 1.5 * IQR_Sal
+print(lower_border)
+print(upper_border)
+```
+Variables such as gender and position are categorical, so there is no mean or median value. If we want to show mode of the categorical values, we have to convert them into factors. For now, I will not do that.
+
+While looking at the numerical variables, such as experience in years and salary, I can see that the median and mean values are quite close, but the range is quite large, so I will make graphics such as boxplot and histogram, to see if we have some outliers. When it comes to ID variable, I am not working with it in this case. In real world, salaries oftentimes don't have the normal distribution, but my opinion is that IT salaries perhaps might have a normal distribution in real world (think about the ratio of juniors and seniors on each side, there is probably more people who keep themselves on the medior position).
+
+Below you can see the code for histogram for numerical variables.
+
+```{r}
+library(ggplot2)
+main = ggplot(data,aes(x=Experience..Years.)) #histogram for years of experience
+main + geom_histogram(fill="#088395",colour="#071952",binwidth=1) + ggtitle("Distribution of years of experience") + xlab("Experience in years") + ylab("Count of IT employees")
+```
+Experience in years among IT employees is scattered from 0 to 20 years, with median and mean values being quite close together (around 10 years of experience).
+
+```{r}
+options(scipen=999) #to mitigate e-numbers on our histograms
+main = ggplot(data,aes(x=Salary)) #histogram for salaries
+main + geom_histogram(fill="#088395",colour="#071952",binwidth=20000) + ggtitle("Distribution of salaries") + xlab("Salary in USD") + ylab("Count of IT employees")
+```
+Unlike the experience distribution, this distribution of salaries among IT employees does have gaussian type, normal look of distributions, although we see some tails on the higher(right) side of the distribution. We can say, from the summary, that the median and mean vaulues are closer together (128k vs 131k), but IQR is around 57,2k which is a higher range.
+
+Let's check boxplots to see if we can hunt down some outliers for these variables.
+
+```{r}
+ggplot(data,aes(x=Experience..Years.)) + geom_boxplot(fill="#088395",colour="#071952") + ggtitle("Boxplot of experience in years") + xlab("Experience in years")
+```
+Boxplot for experience in years doesn't show any outliers, we will proceed with this variable as it is.
+
+```{r}
+ggplot(data,aes(x=Salary)) + geom_boxplot(fill="#088395",colour="#071952") + ggtitle("Boxplot of salaries") + xlab("Salary in USD")
+```
+As predicted, and seen on histogram, variable salary in USD has some outliers on the higher side. Let's code more to see how many of them do we have and if it is possible to delete them, if they don't make a big portion of the dataset.
+
+```{r}
+boxplot.stats(data$Salary)$out #code to see the values of the outliers shown on boxplot
+out=boxplot.stats(data$Salary)$out
+out_ind=which(data$Salary %in% c(out)) #code to see in which rows are those outliers in the dataset
+out_ind
+```
+You can see that we have 5 outliers, which is only 1,25% of the whole dataset. I will go further with deleting these outliers, so we can draw out some relationships between the categorical and numerical values, and so it doesn't hinder our hypothesis testing and predictive analysis processes later on.
+
+```{r}
+# Remove rows where Salary is higher than the upper_border which we have calculated in the beginning
+data <- data[data$Salary <= 243610.4, ]
+# Print the modified data frame
+print(data)
+```
+```{r}
+ggplot(data,aes(x=Salary)) + geom_boxplot(fill="#088395",colour="#071952") + ggtitle("Boxplot of salaries") + xlab("Salary in USD")
+```
+
+Now, after deleting those 5 values, we still have one outlier, but that only then makes 0,25% of all values. I am deciding to keep it, as it probably won't hinder our predictive processes later on.
+
+# Relationships between categorical and numerical values
+
+In order to discover relationships between these variables in the dataset, we have to ask ourselves some questions:
+1. How does the distribution of experience in years look like between genders?
+2. How does the distribution of salary in USD look like between genders?
+3. Do employees with more experience earn more money?
+4. What is the difference between salaries between positions?
+5. If I have 5 years of experience, what will my salary be?
+
+The first four questions are just based on/in this sample, while 5th question is going to be checked via linear regression analysis, if all prerequisites for it are checked and correct.
+
+## 1. How does the distribution of experience in years look like between genders?
+
+```{r}
+basic = ggplot(data,aes(x=Gender,y=Experience..Years.))
+basic + geom_violin(trim=FALSE,adjust=0.5)
+```
+
+
+
+
+
+
