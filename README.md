@@ -1,5 +1,7 @@
 # Employee Data Simulation - IT salaries and work experience
 
+Please check the HTML file for full code and graphs!
+
 ## Origin of the dataset
 
 The dataset has been found and downloaded on Kaggle - https://www.kaggle.com/datasets/abhayayare/employee-data-simulation-it-industry.
